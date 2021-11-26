@@ -18,3 +18,15 @@ Para rodar o projeto execute:
 ```bash
 php -S localhost:8080 -t public
 ```
+
+## Estrutura do Projeto
+A pasta public é a principal do projeto, onde a partir dela será executada a aplicação.
+
+Dentro da pasta src
+a pasta Controller é realizada a lógica e controle da aplicação.
+
+a pasta Entity é onde está localizado o modelo da aplicação.
+
+a pasta infra possui a configuração para conectar com o banco de dados.
+
+A pasta view possui os arquivos responsáveis pela visualização da aplicação rodando na web.
