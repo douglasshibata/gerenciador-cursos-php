@@ -13,3 +13,8 @@ Para baixar as dependências execute
 composer install
 ```
 
+## Rodar o projeto
+Para rodar o projeto execute: 
+```bash
+php -S localhost:8080 -t public
+```
