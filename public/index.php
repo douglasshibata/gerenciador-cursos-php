@@ -7,18 +7,27 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-$caminho = $_SERVER['PATH_INFO'];
+// Safely extract the request path, fallback to '/'
+$caminho = $_SERVER['PATH_INFO'] ?? parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
 $rotas = require __DIR__ . '/../config/routes.php';
 
 if (!array_key_exists($caminho, $rotas)) {
     http_response_code(404);
+    echo "Página não encontrada (404)";
     exit();
 }
 
-session_start();
+// Start session securely
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$ehRotaDeLogin = stripos($caminho, 'login');
-if (!isset($_SESSION['logado']) && $ehRotaDeLogin === false) {
+// Check authentication for protected routes
+$rotasPublicas = ['/login', '/realiza-login'];
+$ehRotaPublica = in_array($caminho, $rotasPublicas, true);
+
+if (!isset($_SESSION['logado']) && !$ehRotaPublica) {
     header('Location: /login');
     exit();
 }
@@ -41,6 +50,8 @@ $container = require __DIR__ . '/../config/dependencies.php';
 $controlador = $container->get($classeControladora);
 
 $resposta = $controlador->handle($serverRequest);
+
+http_response_code($resposta->getStatusCode());
 
 foreach ($resposta->getHeaders() as $name => $values) {
     foreach ($values as $value) {
