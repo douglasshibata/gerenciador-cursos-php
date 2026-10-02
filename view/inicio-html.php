@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title><?= htmlspecialchars($titulo ?? 'Gerenciador de Cursos', ENT_QUOTES, 'UTF-8'); ?></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
@@ -20,12 +20,12 @@
 
 <div class="container">
     <div class="jumbotron">
-        <h1><?= $titulo; ?></h1>
+        <h1><?= htmlspecialchars($titulo ?? '', ENT_QUOTES, 'UTF-8'); ?></h1>
     </div>
 
     <?php if (isset($_SESSION['mensagem'])): ?>
-    <div class="alert alert-<?= $_SESSION['tipo_mensagem']; ?>">
-        <?= $_SESSION['mensagem']; ?>
+    <div class="alert alert-<?= htmlspecialchars($_SESSION['tipo_mensagem'] ?? 'info', ENT_QUOTES, 'UTF-8'); ?>">
+        <?= htmlspecialchars($_SESSION['mensagem'], ENT_QUOTES, 'UTF-8'); ?>
     </div>
     <?php
         unset($_SESSION['mensagem']);

@@ -14,9 +14,6 @@ class Persistencia implements RequestHandlerInterface
 {
     use FlashMessageTrait;
 
-    /**
-     * @var \Doctrine\ORM\EntityManagerInterface
-     */
     private $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
@@ -26,27 +23,38 @@ class Persistencia implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $descricao = filter_var(
-            $request->getParsedBody()['descricao'],
-            FILTER_SANITIZE_STRING
-        );
+        $parsedBody = $request->getParsedBody();
+        $rawDescricao = is_array($parsedBody) && isset($parsedBody['descricao'])
+            ? trim((string) $parsedBody['descricao'])
+            : '';
 
-        $curso = new Curso();
-        $curso->setDescricao($descricao);
+        if (empty($rawDescricao)) {
+            $this->defineMensagem('danger', 'A descrição do curso não pode ser vazia');
+            return new Response(302, ['Location' => '/listar-cursos']);
+        }
 
-        $id = filter_var(
-            $request->getQueryParams()['id'],
-            FILTER_VALIDATE_INT
-        );
+        // Refactored: sanitize input safely without using deprecated FILTER_SANITIZE_STRING
+        $descricao = strip_tags($rawDescricao);
 
-        $tipo = 'success';
-        if (!is_null($id) && $id !== false) {
-            $curso->setId($id);
-            $this->entityManager->merge($curso);
-            $this->defineMensagem($tipo, 'Curso atualizado com sucesso');
+        $queryParams = $request->getQueryParams();
+        $idParam = isset($queryParams['id']) ? $queryParams['id'] : null;
+        $id = filter_var($idParam, FILTER_VALIDATE_INT);
+
+        if (!is_null($idParam) && $id !== false && $id !== null) {
+            // Refactored: Fetch existing managed entity instead of calling deprecated merge() or setting ID manually
+            /** @var Curso|null $curso */
+            $curso = $this->entityManager->find(Curso::class, $id);
+            if (is_null($curso)) {
+                $this->defineMensagem('danger', 'Curso não encontrado para alteração');
+                return new Response(302, ['Location' => '/listar-cursos']);
+            }
+            $curso->setDescricao($descricao);
+            $this->defineMensagem('success', 'Curso atualizado com sucesso');
         } else {
+            $curso = new Curso();
+            $curso->setDescricao($descricao);
             $this->entityManager->persist($curso);
-            $this->defineMensagem($tipo, 'Curso inserido com sucesso');
+            $this->defineMensagem('success', 'Curso inserido com sucesso');
         }
 
         $this->entityManager->flush();

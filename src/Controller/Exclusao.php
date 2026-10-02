@@ -14,9 +14,6 @@ class Exclusao implements RequestHandlerInterface
 {
     use FlashMessageTrait;
 
-    /**
-     * @var \Doctrine\ORM\EntityManagerInterface
-     */
     private $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
@@ -26,21 +23,23 @@ class Exclusao implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $id = filter_var(
-            $request->getQueryParams()['id'],
-            FILTER_VALIDATE_INT
-        );
+        $queryParams = $request->getQueryParams();
+        $idParam = isset($queryParams['id']) ? $queryParams['id'] : null;
+        $id = filter_var($idParam, FILTER_VALIDATE_INT);
 
         $resposta = new Response(302, ['Location' => '/listar-cursos']);
-        if (is_null($id) || $id === false) {
+        if ($id === false || is_null($id)) {
             $this->defineMensagem('danger', 'Curso inexistente');
             return $resposta;
         }
 
-        $curso = $this->entityManager->getReference(
-            Curso::class,
-            $id
-        );
+        // Refactored: Fetch real entity and check for existence before removal to avoid fatal ORM errors
+        $curso = $this->entityManager->find(Curso::class, $id);
+        if (is_null($curso)) {
+            $this->defineMensagem('danger', 'Curso não encontrado');
+            return $resposta;
+        }
+
         $this->entityManager->remove($curso);
         $this->entityManager->flush();
         $this->defineMensagem('success', 'Curso excluído com sucesso');

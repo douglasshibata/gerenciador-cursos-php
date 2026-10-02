@@ -7,13 +7,13 @@
     <ul class="list-group">
         <?php foreach ($cursos as $curso): ?>
             <li class="list-group-item d-flex justify-content-between">
-                <?= $curso->getDescricao(); ?>
+                <?= htmlspecialchars($curso->getDescricao(), ENT_QUOTES, 'UTF-8'); ?>
 
                 <span>
-                    <a href="/alterar-curso?id=<?= $curso->getId(); ?>" class="btn btn-info btn-sm">
+                    <a href="/alterar-curso?id=<?= (int) $curso->getId(); ?>" class="btn btn-info btn-sm">
                         Alterar
                     </a>
-                    <a href="/excluir-curso?id=<?= $curso->getId(); ?>" class="btn btn-danger btn-sm">
+                    <a href="/excluir-curso?id=<?= (int) $curso->getId(); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este curso?');">
                         Excluir
                     </a>
                 </span>

@@ -5,7 +5,6 @@ namespace Alura\Cursos\Controller;
 use Alura\Cursos\Entity\Curso;
 use Alura\Cursos\Helper\FlashMessageTrait;
 use Alura\Cursos\Helper\RenderizadorDeHtmlTrait;
-use Alura\Cursos\Infra\EntityManagerCreator;
 use Doctrine\ORM\EntityManagerInterface;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -16,9 +15,6 @@ class FormularioEdicao implements RequestHandlerInterface
 {
     use RenderizadorDeHtmlTrait, FlashMessageTrait;
 
-    /**
-     * @var \Doctrine\Common\Persistence\ObjectRepository
-     */
     private $repositorioCursos;
 
     public function __construct(EntityManagerInterface $entityManager)
@@ -29,18 +25,23 @@ class FormularioEdicao implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $id = filter_var(
-            $request->getQueryParams()['id'],
-            FILTER_VALIDATE_INT
-        );
+        $queryParams = $request->getQueryParams();
+        $idParam = isset($queryParams['id']) ? $queryParams['id'] : null;
+        $id = filter_var($idParam, FILTER_VALIDATE_INT);
 
-        $resposta = new Response(302, ['Location' => '/listar-cursos']);
-        if (is_null($id) || $id === false) {
+        $respostaRedirect = new Response(302, ['Location' => '/listar-cursos']);
+        if ($id === false || is_null($id)) {
             $this->defineMensagem('danger', 'ID de curso inválido');
-            return $resposta;
+            return $respostaRedirect;
         }
 
+        // Refactored: Validate that course exists before rendering edit form to prevent call on null
+        /** @var Curso|null $curso */
         $curso = $this->repositorioCursos->find($id);
+        if (is_null($curso)) {
+            $this->defineMensagem('danger', 'Curso não encontrado');
+            return $respostaRedirect;
+        }
 
         $html = $this->renderizaHtml('cursos/formulario.php', [
             'curso' => $curso,
